@@ -24,8 +24,12 @@ The data is updated to 01/06/2020.
  
  <a><img src="https://seekvectorlogo.com/wp-content/uploads/2017/12/att-vector-logo.png" align="left" width="140" height="100" /></a>
  
+  <a><img src=" https://www.pc.co.il/wp-content/uploads/2016/10/AMD_Logo.600.jpg" align="left" width="140" height="100" /></a>
  
+
+
 Enjoy!
+
 
 
 **please note**: this is not a recommendation
