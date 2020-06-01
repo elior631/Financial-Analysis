@@ -1,0 +1,338 @@
+---
+title: "Top Tech. stocks for Q2 2020"
+author: "Elior Bliah"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document:
+    always_allow_html: true
+    highlight: tango
+    theme: flatly
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r include=FALSE}
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(tidyverse, PerformanceAnalysis, quantmod, dygraphs,tidyquant,tibbletime,knitr,webshot, timetk, broom, simfinR, memoise,scales,kableExtra )
+
+install.packages("webshot")
+webshot::install_phantomjs()
+```
+
+
+```{r include=FALSE}
+tickers <- c("PYPL", "NVDA", "EBAY", "AMD", "T", "INTC")
+
+prices <- tq_get(tickers,
+                 from = "2018-01-01",
+                 to = now(),
+                 get = "stock.prices") %>%
+  group_by(symbol)
+
+
+prices$symbol[prices$symbol == "PYPL"] <- "PayPal"
+prices$symbol[prices$symbol == "NVDA"] <- "NVIDIA"
+prices$symbol[prices$symbol == "EBAY"] <- "Ebay"
+prices$symbol[prices$symbol == "AMD"] <- "AMD"
+prices$symbol[prices$symbol == "T"] <- "AT&T"
+prices$symbol[prices$symbol == "INTC"] <- "Intel Corp."
+
+```
+
+# Stocks Analysis
+
+## Daily Stock Prices
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+prices %>%
+  ggplot(aes(x = date, y = adjusted, color = symbol)) +
+  geom_line(size = 0.5) +
+  labs( x = "", y = "Adjusted Prices", color = "", size = 0.5) +
+  facet_wrap(~ symbol, ncol = 2, scales = "free_y") +
+  scale_y_continuous(labels = scales::dollar) +
+  theme_tq() + 
+  scale_color_tq()
+```
+
+
+
+## As an index (=100)
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+prices %>%
+  tq_transmute(adjusted, 
+               periodReturn, 
+               period = "daily", 
+               type = "log", 
+               col_rename = "returns") %>%
+  mutate(wealth.index = 100 * cumprod(1 + returns)) %>%
+  ggplot(aes(x = date, y = wealth.index, color = symbol)) +
+  geom_line(size = 1) +
+  theme_tq() + 
+  scale_color_tq()
+```
+
+
+## Daily Log Returns
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+prices_log_return <- prices %>%
+  group_by(symbol) %>%
+  tq_transmute(select     = adjusted, 
+               mutate_fun = periodReturn, 
+               period     = "daily", 
+               type       = "log",
+               col_rename = "monthly.returns")
+
+prices_log_return %>%
+  ggplot(aes(x = monthly.returns, fill = symbol)) +
+  geom_density(alpha = 0.5) +
+  labs( x = "Monthly Returns", y = "Density") +
+  theme_tq() +
+  scale_fill_tq() + 
+  facet_wrap(~ symbol, ncol = 2)
+```
+
+
+
+## Min/Max Price By Quarter
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+stock_max_by_q <- prices %>%
+  group_by(symbol) %>%
+  tq_transmute(select     = adjusted, 
+               mutate_fun = apply.quarterly, 
+               FUN        = max, 
+               col_rename = "max.close") %>%
+  mutate(year.qtr = paste0(year(date), "-Q", quarter(date))) %>%
+  select(-date)
+
+
+stock_min_by_q <- prices %>%
+  group_by(symbol) %>%
+  tq_transmute(select     = adjusted, 
+               mutate_fun = apply.quarterly, 
+               FUN        = min, 
+               col_rename = "min.close") %>%
+  mutate(year.qtr = paste0(year(date), "-Q", quarter(date))) %>%
+  select(-date)
+
+stock_by_q <- left_join(stock_max_by_q, stock_min_by_q,
+                         by = c("symbol"   = "symbol",
+                                "year.qtr" = "year.qtr"))
+
+
+stock_by_q %>%
+  ggplot(aes(x = year.qtr, color = symbol)) +
+  geom_segment(aes(xend = year.qtr, y = min.close, yend = max.close),
+               size = 1) +
+  geom_point(aes(y = max.close), size = 2) +
+  geom_point(aes(y = min.close), size = 2) +
+  facet_wrap(~ symbol, ncol = 2, scale = "free_y") +
+  labs(y = "Stock Price", color = "") +
+  theme_tq() +
+  scale_color_tq() +
+  scale_y_continuous(labels = scales::dollar) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.x = element_blank())
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+prices1 <- 
+  getSymbols(tickers, src = 'yahoo', 
+             from = "2018-01-01",
+             to = now(),
+             auto.assign = TRUE, warnings = FALSE, "getSymbols.warning4.0" =FALSE) %>% 
+  map(~Ad(get(.))) %>%
+  reduce(merge) %>% 
+  `colnames<-`(tickers)
+
+prices_monthly <- to.monthly(prices1, indexAt = "last", OHLC = FALSE)
+
+asset_returns_xts <- na.omit(Return.calculate(prices_monthly, method = "log"))
+```
+
+
+## Monthly returns
+```{r echo=FALSE}
+dygraph(asset_returns_xts) %>%
+  dyAxis("y", label = "%") %>%
+  dyOptions(colors = RColorBrewer::brewer.pal(3, "Set2"))
+```
+
+
+
+# Sharp Ratio
+
+The sharp ratio was calculated 
+
+\[ Sharp Ratio = \frac{R_i + r_f}{\sigma_i} \] 
+
+where \[r_f = 0.15\% \] according to  U.S. [T-bills for one year]('https://www.treasury.gov/resource-center/data-chart-center/interest-rates/pages/textview.aspx?data=yield')  
+
+```{r echo=FALSE, results= 'asis'}
+sharpe_ratio <- round(SharpeRatio(asset_returns_xts, Rf = .00015), 2)
+
+sharpe_ratio %>%
+   kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+
+
+# CAPM β and α
+
+
+Just as a reminder, the formula of the Capital Asset Pricing Model (CAPM) is as the following:
+
+\[\quad\textrm{Expected returns}  = \alpha +\beta(r_m - r_f) +\epsilon    \]
+
+The β is a measurement of its volatility of returns relative to the entire market.
+The beta coefficient can be interpreted as follows:
+
+β =1 exactly as volatile as the market
+
+β >1 more volatile than the market
+
+β <1>0 less volatile than the market
+
+β =0 uncorrelated to the market
+
+β <0 negatively correlated to the market
+
+"Alpha" is a term used in investing to describe a strategy's ability to beat the market, or it's "edge." Alpha is thus also often referred to as “excess return” or “abnormal rate of return,” which refers to the idea that markets are efficient, and so there is no way to systematically earn returns that exceed the broad market as a whole.
+
+```{r echo=FALSE}
+asset_returns_long <-  
+  prices1 %>% 
+  to.monthly(indexAt = "last", OHLC = FALSE) %>% 
+  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
+  gather(asset, returns, -date) %>% 
+  group_by(asset) %>%  
+  mutate(returns = (log(returns) - log(lag(returns)))) %>% 
+  na.omit()
+
+finx_monthly_xts <- 
+  getSymbols("SPY", 
+             src = 'yahoo', 
+             from = "2018-01-01", 
+             to = now(),
+             auto.assign = TRUE, 
+             warnings = FALSE) %>% 
+  map(~Ad(get(.))) %>% 
+  reduce(merge) %>%
+  `colnames<-`("SPY") %>% 
+  to.monthly(indexAt = "last", OHLC = FALSE)
+
+market_returns_xts <-
+  Return.calculate(finx_monthly_xts, method = "log") %>% 
+  na.omit()
+```
+
+
+```{r echo=FALSE}
+library(dplyr)
+beta_builtin_xts <- round(CAPM.beta(asset_returns_xts, market_returns_xts),3) %>%
+  data.frame()
+alpha_builitin_xts <- round(CAPM.alpha(asset_returns_xts, market_returns_xts),3)
+
+capm_table <- rbind(alpha_builitin_xts, beta_builtin_xts)
+
+
+capm_table %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+
+
+
+# Financial Statements
+
+
+## Annual Profit/Loss of the Companies
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+my_api_key <- 'BCyGJflQJY0ZWt9WhAiKSYwMlIZTW5pm'
+
+
+# get info
+df_info_companies <- simfinR_get_available_companies(my_api_key)
+
+fintech_ids <- c(85652, 109664, 66790,172199 , 104109, 191397)
+
+id_companies <- fintech_ids 
+type_statements <- 'pl' # profit/loss
+periods = 'FY' # final year
+years = 2015:2019
+
+df_fin_FY <- simfinR_get_fin_statements(
+  id_companies,
+  type_statements = type_statements,
+  periods = periods,
+  year = years,
+  api_key = my_api_key)
+
+
+net_income <- df_fin_FY %>%
+  filter(acc_name == 'Net Income')
+
+
+net_income %>%
+ggplot( aes(x = year, y = (acc_value)/1000000), color = factor(year)) +
+  geom_col(aes(fill = factor(year))) + 
+  labs(title = 'In millions',
+       x = '',
+       y = 'Net Profit/Loss',
+       caption = 'Data from simfin') + 
+  facet_wrap(~company_name, scales = 'free_y') + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))+
+  theme_tq() +
+  guides(fill = guide_colorbar(barwidth = unit(9, "cm"))) +
+  scale_fill_brewer(palette = "Set2")
+
+```
+
+
+## Quarterly Profit/Loss of the Companies
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.height=11}
+type_statements <- 'pl' # profit/loss
+periods = c('Q1', 'Q2', 'Q3', 'Q4') # final year
+years = 2019:2020
+
+df_fin_quarters <- simfinR_get_fin_statements(
+  id_companies,
+  type_statements = type_statements,
+  periods = periods,
+  year = years,
+  api_key = my_api_key)
+
+
+net_income_q <- df_fin_quarters %>% 
+  filter(acc_name == 'Net Income')
+
+
+net_income_q %>%
+  ggplot(aes(x = ref_date, y = acc_value/1000000), color = period ) +
+  geom_col(aes(fill = period)) + 
+  labs(title = 'In millions',
+       x = '',
+       y = 'Net Profit/Loss',
+       caption = 'Data from simfin') + 
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))+
+  facet_wrap(~company_name ,scales = 'free' , ncol = 2) +
+  theme_tq()+
+scale_x_date(
+    date_labels = "%m/%y") +
+   scale_fill_brewer(palette = "Set2")
+```
