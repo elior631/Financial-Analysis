@@ -1,6 +1,7 @@
 # Financial-Analysis
 
 ## Fintech stock analysis
+<a href="https://github.com/rstudio/pagedown"><img src="https://www.google.com/url?sa=i&url=https%3A%2F%2Fwww.logoisus.com%2Fproduct%2Ffintech-logo%2F&psig=AOvVaw0wBhesDd7bJGzgRWBqaVnA&ust=1591113468750000&source=images&cd=vfe&ved=0CAIQjRxqFwoTCOjDz-r94OkCFQAAAAAdAAAAABAJ" alt="pagedown logo" align="right" /></a>
  Enjoy a new update of the performance of 6 interesting
  stocks in the Fintech sector in the U.S.
  
