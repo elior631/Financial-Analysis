@@ -1,7 +1,7 @@
 # Financial-Analysis
 
 ## Fintech stock analysis
-<a href="https://github.com/rstudio/pagedown"><img src="https://www.logoisus.com/wp-content/uploads/2018/04/blue_triangle_finance.jpg" alt="Fintech logo" align="right" style="width:50px;height:60px;" /></a>
+<a href="https://github.com/rstudio/pagedown"><img src="https://www.logoisus.com/wp-content/uploads/2018/04/blue_triangle_finance.jpg" alt="Fintech logo" align="right" width="50" height="60" /></a>
 
 Enjoy a new update of the performance of 6 interesting
  stocks in the Fintech sector in the U.S.
