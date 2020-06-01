@@ -18,13 +18,13 @@ The data is updated to 01/06/2020.
 
 <a><img src="https://logos-download.com/wp-content/uploads/2016/10/NVIDIA_logo_-700x700.png" alt="Fintech logo" align="left" width="140" height="100" /></a>
 
-<a><img src="https://banner2.cleanpng.com/20181118/hjw/kisspng-logo-brand-product-design-font-toys-fix-it-e-store-5bf2417ee73cf8.3255189515426031349472.jpg" alt="Fintech logo" align="middle" width="140" height="100" /></a>
+<a><img src="https://affordablepressurewashingllc.com/wp-content/uploads/2019/01/paypal.jpg" alt="Fintech logo" align="middle" width="140" height="100" /></a>
 
-<a><img src="https://i7.pngflow.com/pngimage/13/92/png-computer-icons-ebay-online-shopping-ebay-text-trademark-logo-10-off-clipart.png" align="right" width="140" height="100" /></a>
+<a><img src="https://i.ebayimg.com/images/g/4XsAAOSwZC1Z7oHl/s-l400.jpg" align="right" width="140" height="100" /></a>
  
  <a><img src="https://seekvectorlogo.com/wp-content/uploads/2017/12/att-vector-logo.png" align="left" width="140" height="100" /></a>
  
-  <a><img src=" https://www.pc.co.il/wp-content/uploads/2016/10/AMD_Logo.600.jpg" align="left" width="140" height="100" /></a>
+  <a><img src="https://www.pc.co.il/wp-content/uploads/2016/10/AMD_Logo.600.jpg" align="left" width="160" height="100" /></a>
  
 
 
